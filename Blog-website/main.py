@@ -15,17 +15,21 @@ import os
 from dotenv import load_dotenv
 import gunicorn
 import psycopg2
+
+# Load environment variables from .env file
 load_dotenv()
+
+# Initialize Flask app
 app = Flask(__name__)
-app.config['SECRET_KEY'] = "8BYkEfBA6O6donzWlSihBXox7C0sKR6b"
+app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "8BYkEfBA6O6donzWlSihBXox7C0sKR6b")
 ckeditor = CKEditor(app)
 Bootstrap5(app)
-# Use your mail id for receiving mail
+
+# Configure email settings
 my_email = os.getenv("MY_EMAIL")
-# Use your password id for receiving mail
 my_pass = os.getenv("MY_PASSWORD")
 
-# TODO: Configure Flask-Login
+# Configure Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
 
@@ -35,7 +39,7 @@ def load_user(user_id):
     return db.get_or_404(User, user_id)
 
 
-# CREATE DATABASE
+# Initialize SQLAlchemy with DeclarativeBase
 class Base(DeclarativeBase):
     pass
 
@@ -44,7 +48,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI", "sqlite:///post
 db = SQLAlchemy(model_class=Base)
 db.init_app(app)
 
-
+# Configure Gravatar
 gravatar = Gravatar(app,
                     size=100,
                     rating='g',
@@ -55,7 +59,7 @@ gravatar = Gravatar(app,
                     base_url=None)
 
 
-# CONFIGURE TABLES
+# Define User model
 class User(UserMixin, db.Model):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -66,6 +70,7 @@ class User(UserMixin, db.Model):
     comments = relationship("Comment", back_populates="comment_author")
 
 
+# Define BlogPost model
 class BlogPost(db.Model):
     __tablename__ = "blog_posts"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -79,6 +84,7 @@ class BlogPost(db.Model):
     comments = relationship("Comment", back_populates="parent_post")
 
 
+# Define Comment model
 class Comment(db.Model):
     __tablename__ = "comments"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -89,10 +95,12 @@ class Comment(db.Model):
     text: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+# Create all tables
 with app.app_context():
     db.create_all()
 
 
+# Admin-only decorator
 def admin_only(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -103,6 +111,7 @@ def admin_only(f):
     return decorated_function
 
 
+# Route to get all posts
 @app.route('/')
 def get_all_posts():
     result = db.session.execute(db.select(BlogPost))
@@ -110,7 +119,7 @@ def get_all_posts():
     return render_template("index.html", all_posts=posts)
 
 
-# TODO: Use Werkzeug to hash the user's password when creating a new user.
+# Route to register a new user
 @app.route('/register', methods=["POST", "GET"])
 def register():
     if request.method == "POST":
@@ -131,7 +140,7 @@ def register():
     return render_template("register.html", form=form)
 
 
-# TODO: Retrieve a user from the database based on their email. 
+# Route to log in an existing user
 @app.route('/login', methods=["POST", "GET"])
 def login():
     if request.method == "POST":
@@ -151,13 +160,14 @@ def login():
     return render_template("login.html", form=form)
 
 
+# Route to log out the current user
 @app.route('/logout')
 def logout():
     logout_user()
     return redirect(url_for('get_all_posts'))
 
 
-# TODO: Allow logged-in users to comment on posts
+# Route to show a specific post and allow comments
 @app.route("/post/<int:post_id>", methods=["POST", "GET"])
 def show_post(post_id):
     requested_post = db.get_or_404(BlogPost, post_id)
@@ -177,7 +187,7 @@ def show_post(post_id):
     return render_template("post.html", post=requested_post, current_user=current_user, form=comment_form)
 
 
-# TODO: Use a decorator so only an admin user can create a new post
+# Route to add a new post (admin only)
 @app.route("/new-post", methods=["GET", "POST"])
 def add_new_post():
     if current_user.is_authenticated:
@@ -200,7 +210,7 @@ def add_new_post():
         return redirect(url_for("login"))
 
 
-# TODO: Use a decorator so only an admin user can edit a post
+# Route to edit a post (admin only)
 @app.route("/edit-post/<int:post_id>", methods=["GET", "POST"])
 @admin_only
 def edit_post(post_id):
@@ -223,7 +233,7 @@ def edit_post(post_id):
     return render_template("make-post.html", form=edit_form, is_edit=True)
 
 
-# TODO: Use a decorator so only an admin user can delete a post
+# Route to delete a post (admin only)
 @app.route("/delete/<int:post_id>")
 @admin_only
 def delete_post(post_id):
@@ -233,11 +243,13 @@ def delete_post(post_id):
     return redirect(url_for('get_all_posts'))
 
 
+# Route to display the About page
 @app.route("/about")
 def about():
     return render_template("about.html")
 
 
+# Route to display and handle the Contact page
 @app.route("/contact", methods=["GET", "POST"])
 def contact():
     if request.method == "POST":
