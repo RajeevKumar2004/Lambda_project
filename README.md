@@ -38,14 +38,8 @@ Welcome to the Wildlife Blog Website repository! This project is a fully-functio
    MY_EMAIL=your-email@example.com
    MY_PASSWORD=your-email-password
    DB_URI=your-database-uri  # use this if you want to configure database to PostgreSQL
-4. **Database Initialization:**
-   Run the following commands to set up the database:
-   ```bash
-   flask db init
-   flask db migrate
-   flask db upgrade
-5. **Running the Application:**
+4. **Running the Application:**
    Start the Flask development server:
    ```bash
-   flask run
+   python main.py
   Access the website at http://127.0.0.1:5000.
