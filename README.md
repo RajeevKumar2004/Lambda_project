@@ -26,7 +26,8 @@ Welcome to the Wildlife Blog Website repository! This project is a fully-functio
 ## Getting Started:
 1. **Clone the Repository:**
    ```bash
-   git clone https://github.com/yourusername/wildlife-blog.git
+   git clone https://github.com/RajeevKumar2004/lambda_project.git
+   cd lambda_project/Blog-website
 2. **Set Up the Environment:**
    Install the required packages:
    ```bash
